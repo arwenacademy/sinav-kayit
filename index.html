@@ -548,14 +548,25 @@
 
   // ── KART RENDER ─────────────────────────────────────────────
   function renderTurKartlari() {
-    const turler = [...new Set(state.sinavlar.map(s => s.tur))];
+    const bugun = new Date(); bugun.setHours(0,0,0,0); bugun.setDate(bugun.getDate()+3);
+    // Sadece gelecekte tarihi olan sınav türlerini göster
+    const turler = [...new Set(state.sinavlar
+      .filter(s => { const p=s.tarih.split('.'); return new Date(+p[2],+p[1]-1,+p[0])>=bugun; })
+      .map(s => s.tur))];
     const icons  = {OSD:'🇩🇪', GOETHE:'📚', TELC:'🏆', TestDaF:'🎓', DSH:'🎓'};
     build('turCards', turler, tur => `<span style="font-size:20px">${icons[tur]||'📋'}</span> ${tur}`,
       (tur, card) => {
         state.selectedTur = tur;
         state.selectedSehir = state.selectedSeviye = state.selectedTarih = state.selectedKurum = null;
         selectCard('turCards', card); updateOzet();
-        const sehirler = [...new Set(state.sinavlar.filter(s=>s.tur===tur).map(s=>s.sehir))].sort();
+        // Sadece gelecekte tarihi olan şehirleri göster
+        const sehirler = [...new Set(state.sinavlar
+          .filter(s => {
+            if (s.tur !== tur) return false;
+            const p = s.tarih.split('.');
+            return new Date(+p[2],+p[1]-1,+p[0]) >= bugun;
+          })
+          .map(s => s.sehir))].sort();
         renderSehirKartlari(sehirler);
         show('sehirGroup'); hide('seviyeGroup'); hide('tarihGroup');
         hide('secimOzeti'); hide('btn1Next');
@@ -578,7 +589,18 @@
 
   function renderSeviyeKartlari(seviyeler) {
     const renkler = {A1:'#27AE60',A2:'#2ECC71',B1:'#2980B9',B2:'#3498DB',C1:'#8E44AD',C2:'#9B59B6'};
-    build('seviyeCards', seviyeler,
+
+    // Sadece gelecekte tarihi olan seviyeleri göster
+    const bugun = new Date(); bugun.setHours(0,0,0,0); bugun.setDate(bugun.getDate()+3);
+    const aktifSeviyeler = seviyeler.filter(seviye => {
+      return state.sinavlar.some(s => {
+        if (s.tur !== state.selectedTur || s.sehir !== state.selectedSehir || s.seviye !== seviye) return false;
+        const p = s.tarih.split('.');
+        return new Date(+p[2], +p[1]-1, +p[0]) >= bugun;
+      });
+    });
+
+    build('seviyeCards', aktifSeviyeler,
       s => `<span class="seviye-badge" style="color:${renkler[s]||'#333'}">${s}</span><span class="card-sub">Seviye</span>`,
       (seviye, card) => {
         state.selectedSeviye = seviye; state.selectedTarih = null;
@@ -592,7 +614,26 @@
   function renderTarihKartlari(eslesmeler) {
     const container = document.getElementById('tarihCards');
     container.innerHTML = '';
-    eslesmeler.forEach(item => {
+
+    // En erken 3 gün sonrası gösterilir
+    const bugun = new Date();
+    bugun.setHours(0, 0, 0, 0);
+    bugun.setDate(bugun.getDate() + 3);
+
+    // Geçmiş tarihleri filtrele
+    const gelecek = eslesmeler.filter(item => {
+      const p    = item.tarih.split('.');
+      const tarih = new Date(+p[2], +p[1] - 1, +p[0]); // dd.MM.yyyy → Date
+      return tarih >= bugun;
+    });
+
+    if (gelecek.length === 0) {
+      container.innerHTML = '<div style="padding:16px;color:var(--gray-500);font-size:14px">Bu kriterlere uygun yaklaşan sınav tarihi bulunmamaktadır.</div>';
+      container.classList.add('tarih-grid');
+      return;
+    }
+
+    gelecek.forEach(item => {
       const p = item.tarih.split('.');
       const card = document.createElement('div');
       card.className = 'sel-card';
