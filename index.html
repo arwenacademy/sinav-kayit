@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sınav Kaydı – Arwen Academy</title>
+  <style>
+    /* ============================================================
+       ARWEN ACADEMY – SINAV KAYIT FORMU
+       Renk: lacivert #1B2B4B + altın #E8A020 + kırmızı #C0392B
+       ============================================================ */
+    :root {
+      --navy:      #1B2B4B;
+      --navy-mid:  #243659;
+      --navy-light:#344d7a;
+      --gold:      #E8A020;
+      --gold-light:#F5BA4A;
+      --gold-pale: #FEF3DC;
+      --red:       #C0392B;
+      --white:     #FFFFFF;
+      --off-white: #F7F8FC;
+      --gray-100:  #EEF0F6;
+      --gray-200:  #D8DCE8;
+      --gray-500:  #7A84A0;
+      --gray-700:  #444E6A;
+      --success:   #1E8754;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --shadow-sm: 0 2px 8px rgba(27,43,75,.08);
+      --shadow-md: 0 6px 24px rgba(27,43,75,.14);
+      --t: .22s cubic-bezier(.4,0,.2,1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: var(--off-white);
+      color: var(--navy);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HEADER */
+    .site-header {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+      padding: 20px 24px;
+      box-shadow: 0 4px 20px rgba(27,43,75,.3);
+    }
+    .header-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .logo-wrap {
+      width: 56px; height: 56px;
+      background: white;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
+    .logo-fallback {
+      font-weight: 900; font-size: 22px; color: var(--gold);
+    }
+    .header-label {
+      display: block;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 2px;
+    }
+    .header-inner h1 { font-size: 22px; font-weight: 700; color: white; }
+
+    /* STEPPER */
+    .stepper-wrap { background: var(--navy); padding: 0 24px 24px; }
+    .stepper {
+      max-width: 720px; margin: 0 auto;
+      display: flex; align-items: center;
+    }
+    .step { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+    .step-dot {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.25);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px;
+      color: rgba(255,255,255,.4);
+      transition: var(--t);
+    }
+    .step.active .step-dot { border-color: var(--gold); background: var(--gold); color: var(--navy); }
+    .step.done .step-dot   { border-color: var(--success); background: var(--success); color: white; }
+    .step-label {
+      font-size: 11px; font-weight: 600;
+      color: rgba(255,255,255,.4);
+      letter-spacing: .04em; white-space: nowrap;
+      transition: var(--t);
+    }
+    .step.active .step-label { color: var(--gold-light); }
+    .step.done   .step-label { color: rgba(255,255,255,.7); }
+    .step-line {
+      flex: 1; height: 2px;
+      background: rgba(255,255,255,.15);
+      margin: 0 8px 22px;
+    }
+
+    /* MAIN */
+    .main-wrap {
+      flex: 1; max-width: 720px;
+      width: 100%; margin: 32px auto;
+      padding: 0 20px 48px;
+    }
+
+    /* LOADING */
+    .loading-state, .error-state { text-align: center; padding: 64px 24px; color: var(--gray-500); }
+    .error-state { color: var(--red); }
+    .spinner {
+      width: 44px; height: 44px;
+      border: 4px solid var(--gray-200); border-top-color: var(--gold);
+      border-radius: 50%; animation: spin .8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* SECTIONS */
+    .form-section { animation: fadeIn .3s ease both; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    .section-eyebrow {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: .14em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 6px;
+    }
+    .section-title { font-size: 24px; font-weight: 700; color: var(--navy); margin-bottom: 28px; }
+
+    /* CARDS */
+    .field-group { margin-bottom: 28px; }
+    .field-label { display: block; font-size: 13px; font-weight: 600; color: var(--gray-700); margin-bottom: 10px; }
+    .card-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .sel-card {
+      padding: 12px 20px;
+      border: 2px solid var(--gray-200); border-radius: var(--radius-md);
+      background: var(--white); cursor: pointer;
+      font-weight: 600; font-size: 14px; color: var(--navy);
+      transition: var(--t); user-select: none;
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: var(--shadow-sm);
+    }
+    .sel-card:hover { border-color: var(--gold); background: var(--gold-pale); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .sel-card.selected { border-color: var(--navy); background: var(--navy); color: white; }
+    .sel-card.selected .card-sub { color: rgba(255,255,255,.6); }
+    .card-sub { font-size: 11px; font-weight: 500; color: var(--gray-500); }
+    .seviye-grid .sel-card { min-width: 80px; justify-content: center; flex-direction: column; text-align: center; padding: 14px 18px; }
+    .seviye-badge { font-size: 20px; font-weight: 800; }
+    .tarih-grid .sel-card { flex-direction: column; align-items: flex-start; min-width: 140px; }
+    .tarih-day { font-size: 22px; font-weight: 800; line-height: 1; }
+    .tarih-month { font-size: 12px; font-weight: 600; color: var(--gray-500); margin-top: 2px; }
+    .sel-card.selected .tarih-month { color: rgba(255,255,255,.6); }
+
+    /* ÖZET */
+    .secim-ozeti {
+      background: var(--gold-pale); border: 1.5px solid var(--gold-light);
+      border-radius: var(--radius-md); padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+    .ozet-row { display: flex; gap: 12px; font-size: 14px; margin-bottom: 4px; }
+    .ozet-key { font-weight: 600; color: var(--gray-700); min-width: 68px; }
+    .ozet-val { font-weight: 700; color: var(--navy); }
+
+    /* FORM */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 24px; }
+    .field-wrap.full { grid-column: 1 / -1; }
+    .req { color: var(--red); }
+    .text-input {
+      width: 100%; padding: 13px 16px;
+      border: 2px solid var(--gray-200); border-radius: var(--radius-sm);
+      font-size: 15px; font-family: inherit; color: var(--navy);
+      background: white; transition: var(--t); outline: none;
+    }
+    .text-input:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(27,43,75,.1); }
+
+    /* RIZA */
+    .riza-box { border: 2px solid var(--gray-200); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 24px; }
+    .riza-scroll {
+      max-height: 180px; overflow-y: auto;
+      padding: 18px 20px; background: white;
+      font-size: 13px; color: var(--gray-700); line-height: 1.7;
+    }
+    .riza-scroll h4 { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 10px; }
+    .riza-scroll p  { margin-bottom: 8px; }
+    .checkbox-label {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 16px 20px; background: var(--gray-100);
+      cursor: pointer; font-size: 13px; color: var(--navy); line-height: 1.5;
+    }
+    .checkbox-label input[type=checkbox] { display: none; }
+    .checkbox-custom {
+      width: 22px; height: 22px;
+      border: 2px solid var(--gray-200); border-radius: 6px;
+      flex-shrink: 0; background: white;
+      transition: var(--t); display: flex;
+      align-items: center; justify-content: center; margin-top: 1px;
+    }
+    .checkbox-label input:checked + .checkbox-custom { background: var(--navy); border-color: var(--navy); }
+    .checkbox-label input:checked + .checkbox-custom::after { content: '✓'; color: white; font-size: 14px; font-weight: 700; }
+
+    /* UPLOAD */
+    .belge-info {
+      background: #EDF2FF; border: 1.5px solid #B4C6F0;
+      border-radius: var(--radius-sm); padding: 14px 16px;
+      display: flex; gap: 12px; font-size: 13px; color: var(--navy-mid);
+      margin-bottom: 22px; line-height: 1.6;
+    }
+    .belge-info-icon { font-size: 18px; flex-shrink: 0; }
+    .upload-card {
+      background: white; border: 2px solid var(--gray-200);
+      border-radius: var(--radius-md); overflow: hidden; margin-bottom: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+    .upload-card-header {
+      padding: 14px 18px; background: var(--gray-100);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .upload-card-title { font-size: 14px; font-weight: 700; color: var(--navy); }
+    .upload-badge { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }
+    .upload-badge.required { background: #FDECEA; color: var(--red); }
+    .upload-badge.optional  { background: var(--gray-200); color: var(--gray-500); }
+    .upload-zone {
+      margin: 16px; border: 2px dashed var(--gray-200);
+      border-radius: var(--radius-sm); padding: 32px 20px;
+      text-align: center; cursor: pointer; transition: var(--t);
+    }
+    .upload-zone:hover, .upload-zone.drag-over { border-color: var(--gold); background: var(--gold-pale); }
+    .upload-icon  { font-size: 36px; margin-bottom: 10px; }
+    .upload-hint  { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+    .upload-sub   { font-size: 12px; color: var(--gray-500); }
+    .file-preview {
+      margin: 0 16px 16px; background: var(--gold-pale);
+      border: 1.5px solid var(--gold-light); border-radius: var(--radius-sm);
+      padding: 12px 16px; display: flex; align-items: center;
+      gap: 12px; font-size: 13px; font-weight: 600; color: var(--navy);
+    }
+    .file-preview .del-btn {
+      margin-left: auto; background: none; border: none;
+      cursor: pointer; font-size: 20px; color: var(--gray-500);
+      transition: var(--t); padding: 0 4px; line-height: 1;
+    }
+    .file-preview .del-btn:hover { color: var(--red); }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px; border: none; border-radius: var(--radius-sm);
+      font-size: 15px; font-weight: 700; cursor: pointer;
+      transition: var(--t); font-family: inherit;
+    }
+    .btn-primary { background: var(--navy); color: white; box-shadow: var(--shadow-sm); }
+    .btn-primary:hover:not(:disabled) { background: var(--navy-light); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .btn-primary:disabled { background: var(--gray-200); color: var(--gray-500); cursor: not-allowed; }
+    .btn-ghost { background: transparent; color: var(--gray-500); border: 2px solid var(--gray-200); }
+    .btn-ghost:hover { border-color: var(--navy); color: var(--navy); }
+    .btn-row { display: flex; gap: 12px; margin-top: 28px; justify-content: space-between; }
+
+    /* SUCCESS */
+    .success-wrap { text-align: center; padding: 40px 20px; }
+    .success-icon { font-size: 72px; margin-bottom: 20px; display: block; animation: pop .5s ease; }
+    @keyframes pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+    .success-title { font-size: 28px; font-weight: 800; color: var(--navy); margin-bottom: 12px; }
+    .success-sub { font-size: 16px; color: var(--gray-500); max-width: 440px; margin: 0 auto 24px; line-height: 1.6; }
+    .success-ozet {
+      background: var(--gold-pale); border: 1.5px solid var(--gold-light);
+      border-radius: var(--radius-md); padding: 18px 24px;
+      margin: 0 auto 20px; max-width: 400px; text-align: left;
+    }
+    .success-mail-note { font-size: 13px; color: var(--gray-500); margin-bottom: 28px; }
+
+    /* SUBMIT LOADING */
+    .submit-loading { text-align: center; padding: 64px 24px; color: var(--gray-500); }
+    .submit-loading p { margin-top: 0; font-size: 16px; }
+
+    /* FOOTER */
+    .site-footer {
+      text-align: center; padding: 20px;
+      font-size: 12px; color: var(--gray-500);
+      border-top: 1px solid var(--gray-100); background: white;
+    }
+
+    /* UTILS */
+    .hidden { display: none !important; }
+
+    /* MOBILE */
+    @media (max-width: 580px) {
+      .header-inner h1 { font-size: 18px; }
+      .section-title   { font-size: 20px; }
+      .form-grid       { grid-template-columns: 1fr; }
+      .field-wrap.full { grid-column: 1; }
+      .btn-row         { flex-direction: column-reverse; }
+      .btn             { width: 100%; justify-content: center; }
+      .stepper-wrap    { padding: 0 12px 20px; }
+      .step-label      { font-size: 9px; }
+      .step-dot        { width: 28px; height: 28px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo-wrap">
+      <img src="https://drive.google.com/uc?id=LOGO_FILE_ID_BURAYA" alt="Arwen Academy"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+      <span class="logo-fallback" style="display:none">A</span>
+    </div>
+    <div>
+      <span class="header-label">Dil Sınavı</span>
+      <h1>Kayıt Formu</h1>
+    </div>
+  </div>
+</header>
+
+<!-- STEPPER -->
+<div class="stepper-wrap">
+  <div class="stepper">
+    <div class="step active" id="sd1"><div class="step-dot"><span>1</span></div><div class="step-label">Sınav Seç</div></div>
+    <div class="step-line"></div>
+    <div class="step" id="sd2"><div class="step-dot"><span>2</span></div><div class="step-label">Bilgiler</div></div>
+    <div class="step-line"></div>
+    <div class="step" id="sd3"><div class="step-dot"><span>3</span></div><div class="step-label">Belgeler</div></div>
+    <div class="step-line"></div>
+    <div class="step" id="sd4"><div class="step-dot"><span>4</span></div><div class="step-label">Onay</div></div>
+  </div>
+</div>
+
+<main class="main-wrap">
+
+  <!-- LOADING -->
+  <div id="loadingState" class="loading-state">
+    <div class="spinner"></div>
+    <p>Sınav tarihleri yükleniyor…</p>
+  </div>
+
+  <!-- ERROR -->
+  <div id="errorState" class="error-state hidden">
+    <div style="font-size:48px;margin-bottom:12px">⚠️</div>
+    <p>Sınav bilgileri yüklenemedi. Lütfen sayfayı yenileyin.</p>
+    <button class="btn btn-ghost" style="margin-top:16px" onclick="location.reload()">Yenile</button>
+  </div>
+
+  <!-- ADIM 1: SINAV SEÇİMİ -->
+  <section id="step1" class="form-section hidden">
+    <div class="section-eyebrow">Adım 1 / 3</div>
+    <h2 class="section-title">Hangi sınava kayıt olmak istiyorsunuz?</h2>
+
+    <div class="field-group">
+      <label class="field-label">Sınav Türü</label>
+      <div id="turCards" class="card-grid"></div>
+    </div>
+    <div class="field-group hidden" id="sehirGroup">
+      <label class="field-label">Şehir</label>
+      <div id="sehirCards" class="card-grid"></div>
+    </div>
+    <div class="field-group hidden" id="seviyeGroup">
+      <label class="field-label">Seviye</label>
+      <div id="seviyeCards" class="card-grid seviye-grid"></div>
+    </div>
+    <div class="field-group hidden" id="tarihGroup">
+      <label class="field-label">Sınav Tarihi</label>
+      <div id="tarihCards" class="card-grid tarih-grid"></div>
+    </div>
+
+    <div id="secimOzeti" class="secim-ozeti hidden">
+      <div class="ozet-row"><span class="ozet-key">Sınav:</span><span id="oz-tur" class="ozet-val"></span></div>
+      <div class="ozet-row"><span class="ozet-key">Şehir:</span><span id="oz-sehir" class="ozet-val"></span></div>
+      <div class="ozet-row"><span class="ozet-key">Seviye:</span><span id="oz-seviye" class="ozet-val"></span></div>
+      <div class="ozet-row"><span class="ozet-key">Tarih:</span><span id="oz-tarih" class="ozet-val"></span></div>
+      <div class="ozet-row"><span class="ozet-key">Kurum:</span><span id="oz-kurum" class="ozet-val"></span></div>
+    </div>
+    <button id="btn1Next" class="btn btn-primary hidden" onclick="goStep(2)">Devam Et →</button>
+  </section>
+
+  <!-- ADIM 2: KİŞİSEL BİLGİLER -->
+  <section id="step2" class="form-section hidden">
+    <div class="section-eyebrow">Adım 2 / 3</div>
+    <h2 class="section-title">Kişisel bilgilerinizi girin</h2>
+
+    <div class="form-grid">
+      <div class="field-wrap full">
+        <label class="field-label">Adınız Soyadınız <span class="req">*</span></label>
+        <input type="text" id="adSoyad" class="text-input" placeholder="Örn: Ahmet Yılmaz">
+      </div>
+      <div class="field-wrap">
+        <label class="field-label">Telefon <span class="req">*</span></label>
+        <input type="tel" id="telefon" class="text-input" placeholder="+90 5XX XXX XX XX">
+      </div>
+      <div class="field-wrap">
+        <label class="field-label">E-posta <span class="req">*</span></label>
+        <input type="email" id="email" class="text-input" placeholder="ornek@mail.com">
+      </div>
+    </div>
+
+    <div class="riza-box">
+      <div class="riza-scroll">
+        <h4>Kişisel Verilerin Korunması Hakkında Aydınlatma Metni</h4>
+        <p>Arwen Education & Services UG ("Arwen Academy") olarak, 6698 sayılı KVKK kapsamında kişisel verilerinizi aşağıda açıklanan amaçlar doğrultusunda işlemekteyiz.</p>
+        <p><strong>İşlenen Veriler:</strong> Ad-soyad, telefon numarası, e-posta adresi, sınav bilgileri ve kimlik belgesi.</p>
+        <p><strong>İşleme Amacı:</strong> Sınav kaydı oluşturulması, dil merkezine bildirim yapılması ve iletişim kurulması amacıyla işlenmektedir.</p>
+        <p><strong>Veri Saklama Süresi:</strong> Verileriniz yasal yükümlülükler kapsamında 5 yıl süreyle saklanacaktır.</p>
+        <p><strong>Haklarınız:</strong> KVKK'nın 11. maddesi uyarınca verilerinize erişim, düzeltme, silme ve işlemeye itiraz hakkına sahipsiniz.</p>
+      </div>
+      <label class="checkbox-label">
+        <input type="checkbox" id="rizaCheck" onchange="toggleRiza()">
+        <span class="checkbox-custom"></span>
+        <span>Aydınlatma metnini okudum, kişisel verilerimin yukarıda belirtilen amaçlarla işlenmesine <strong>açık rıza</strong> veriyorum.</span>
+      </label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(1)">← Geri</button>
+      <button id="btn2Next" class="btn btn-primary" onclick="goStep(3)" disabled>Devam Et →</button>
+    </div>
+  </section>
+
+  <!-- ADIM 3: BELGE YÜKLEME -->
+  <section id="step3" class="form-section hidden">
+    <div class="section-eyebrow">Adım 3 / 3</div>
+    <h2 class="section-title">Kimlik belgenizi yükleyin</h2>
+
+    <div class="belge-info">
+      <span class="belge-info-icon">ℹ️</span>
+      <div><strong>Neden gerekli?</strong> Dil sınavlarına kayıt için geçerli bir kimlik belgesi zorunludur. Pasaport, nüfus cüzdanı veya ehliyet yükleyebilirsiniz.</div>
+    </div>
+
+    <div class="upload-card">
+      <div class="upload-card-header">
+        <span class="upload-badge required">Zorunlu</span>
+        <span class="upload-card-title">Kimlik Belgesi 1</span>
+      </div>
+      <div class="upload-zone" id="drop1"
+        onclick="document.getElementById('file1').click()"
+        ondragover="event.preventDefault();this.classList.add('drag-over')"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="handleDrop(event,1)">
+        <div class="upload-icon">📄</div>
+        <div class="upload-hint">Tıklayın veya dosyayı buraya sürükleyin</div>
+        <div class="upload-sub">PNG, JPG, PDF – Maks. 10 MB</div>
+      </div>
+      <input type="file" id="file1" accept=".jpg,.jpeg,.png,.pdf" style="display:none" onchange="handleFile(1)">
+      <div id="file1Preview" class="file-preview hidden"></div>
+    </div>
+
+    <div class="upload-card">
+      <div class="upload-card-header">
+        <span class="upload-badge optional">İsteğe Bağlı</span>
+        <span class="upload-card-title">Kimlik Belgesi 2 (Ek)</span>
+      </div>
+      <div class="upload-zone" id="drop2"
+        onclick="document.getElementById('file2').click()"
+        ondragover="event.preventDefault();this.classList.add('drag-over')"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="handleDrop(event,2)">
+        <div class="upload-icon">📄</div>
+        <div class="upload-hint">Tıklayın veya dosyayı buraya sürükleyin</div>
+        <div class="upload-sub">PNG, JPG, PDF – Maks. 10 MB</div>
+      </div>
+      <input type="file" id="file2" accept=".jpg,.jpeg,.png,.pdf" style="display:none" onchange="handleFile(2)">
+      <div id="file2Preview" class="file-preview hidden"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="goStep(2)">← Geri</button>
+      <button id="btn3Submit" class="btn btn-primary" onclick="submitForm()" disabled>Kaydı Tamamla ✓</button>
+    </div>
+  </section>
+
+  <!-- ADIM 4: BAŞARILI -->
+  <section id="step4" class="form-section hidden">
+    <div class="success-wrap">
+      <span class="success-icon">✅</span>
+      <h2 class="success-title">Kaydınız Tamamlandı!</h2>
+      <p class="success-sub">Sınav kaydınız başarıyla alındı. Yetkili arkadaşlarımız en kısa sürede sizinle iletişime geçecektir.</p>
+      <div id="successOzet" class="success-ozet"></div>
+      <p class="success-mail-note">📧 Onay e-postası <strong id="successEmail"></strong> adresine gönderildi.</p>
+      <button class="btn btn-ghost" onclick="yeniKayit()">Yeni Kayıt Oluştur</button>
+    </div>
+  </section>
+
+  <!-- SUBMIT LOADING -->
+  <div id="submitLoading" class="submit-loading hidden">
+    <div class="spinner"></div>
+    <p id="loadingText">Kaydınız işleniyor…</p>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <p>© 2026 Arwen Academy · Tüm hakları saklıdır</p>
+</footer>
+
+<script>
+  // ============================================================
+  // BURAYA APPS SCRIPT DEPLOY URL'İNİ YAPIŞTIRINIZ
+  // ============================================================
+  const API_URL = 'APPS_SCRIPT_EXEC_URL_BURAYA';
+
+  const state = {
+    sinavlar: [],
+    selectedTur: null, selectedSehir: null,
+    selectedSeviye: null, selectedTarih: null, selectedKurum: null,
+    files: {1:null, 2:null},
+  };
+
+  // ── BAŞLANGIÇ ───────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', loadSinavlar);
+
+  async function loadSinavlar() {
+    try {
+      const res  = await fetch(API_URL + '?action=getSinavlar');
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      state.sinavlar = json.data;
+      hide('loadingState');
+      show('step1');
+      renderTurKartlari();
+    } catch (err) {
+      hide('loadingState');
+      show('errorState');
+      console.error(err);
+    }
+  }
+
+  // ── KART RENDER ─────────────────────────────────────────────
+  function renderTurKartlari() {
+    const turler = [...new Set(state.sinavlar.map(s => s.tur))];
+    const icons  = {OSD:'🇩🇪', GOETHE:'📚', TELC:'🏆', TestDaF:'🎓', DSH:'🎓'};
+    build('turCards', turler, tur => `<span style="font-size:20px">${icons[tur]||'📋'}</span> ${tur}`,
+      (tur, card) => {
+        state.selectedTur = tur;
+        state.selectedSehir = state.selectedSeviye = state.selectedTarih = state.selectedKurum = null;
+        selectCard('turCards', card); updateOzet();
+        const sehirler = [...new Set(state.sinavlar.filter(s=>s.tur===tur).map(s=>s.sehir))].sort();
+        renderSehirKartlari(sehirler);
+        show('sehirGroup'); hide('seviyeGroup'); hide('tarihGroup');
+        hide('secimOzeti'); hide('btn1Next');
+      });
+  }
+
+  function renderSehirKartlari(sehirler) {
+    const fl = {'İstanbul':'🌆','Ankara':'🏛️','İzmir':'🌊','Mersin':'⛵','Antalya':'🌴','Şanlıurfa':'🌟','Bursa':'🏔️','Adana':'🌶️','Konya':'🌾'};
+    build('sehirCards', sehirler, s => `<span>${fl[s]||'📍'}</span> ${s}`,
+      (sehir, card) => {
+        state.selectedSehir = sehir;
+        state.selectedSeviye = state.selectedTarih = null;
+        selectCard('sehirCards', card); updateOzet();
+        const seviyeler = [...new Set(state.sinavlar.filter(s=>s.tur===state.selectedTur&&s.sehir===sehir).map(s=>s.seviye))]
+          .sort((a,b)=>['A1','A2','B1','B2','C1','C2'].indexOf(a)-['A1','A2','B1','B2','C1','C2'].indexOf(b));
+        renderSeviyeKartlari(seviyeler);
+        show('seviyeGroup'); hide('tarihGroup'); hide('btn1Next');
+      });
+  }
+
+  function renderSeviyeKartlari(seviyeler) {
+    const renkler = {A1:'#27AE60',A2:'#2ECC71',B1:'#2980B9',B2:'#3498DB',C1:'#8E44AD',C2:'#9B59B6'};
+    build('seviyeCards', seviyeler,
+      s => `<span class="seviye-badge" style="color:${renkler[s]||'#333'}">${s}</span><span class="card-sub">Seviye</span>`,
+      (seviye, card) => {
+        state.selectedSeviye = seviye; state.selectedTarih = null;
+        selectCard('seviyeCards', card); updateOzet();
+        const eslesmeler = state.sinavlar.filter(s=>s.tur===state.selectedTur&&s.sehir===state.selectedSehir&&s.seviye===seviye);
+        renderTarihKartlari(eslesmeler);
+        show('tarihGroup'); hide('btn1Next');
+      }, true);
+  }
+
+  function renderTarihKartlari(eslesmeler) {
+    const container = document.getElementById('tarihCards');
+    container.innerHTML = '';
+    eslesmeler.forEach(item => {
+      const p = item.tarih.split('.');
+      const card = document.createElement('div');
+      card.className = 'sel-card';
+      card.innerHTML = `<span class="tarih-day">${p[0]} ${ayAdi(+p[1])}</span><span class="tarih-month">${p[2]} · ${item.kurum}</span>`;
+      card.addEventListener('click', () => {
+        state.selectedTarih = item.tarih; state.selectedKurum = item.kurum;
+        selectCard('tarihCards', card); updateOzet(); show('secimOzeti'); show('btn1Next');
+      });
+      container.appendChild(card);
+    });
+    container.classList.add('tarih-grid');
+  }
+
+  function build(id, items, html, onClick, isSeviye=false) {
+    const c = document.getElementById(id);
+    c.innerHTML = '';
+    if (isSeviye) c.classList.add('seviye-grid');
+    items.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'sel-card';
+      card.innerHTML = html(item);
+      card.addEventListener('click', () => onClick(item, card));
+      c.appendChild(card);
+    });
+  }
+
+  function selectCard(containerId, clicked) {
+    document.querySelectorAll(`#${containerId} .sel-card`).forEach(c=>c.classList.remove('selected'));
+    clicked.classList.add('selected');
+  }
+
+  function updateOzet() {
+    if (state.selectedTur)    document.getElementById('oz-tur').textContent    = state.selectedTur;
+    if (state.selectedSehir)  document.getElementById('oz-sehir').textContent  = state.selectedSehir;
+    if (state.selectedSeviye) document.getElementById('oz-seviye').textContent = state.selectedSeviye;
+    if (state.selectedTarih)  document.getElementById('oz-tarih').textContent  = state.selectedTarih;
+    if (state.selectedKurum)  document.getElementById('oz-kurum').textContent  = state.selectedKurum;
+  }
+
+  // ── ADIM GEÇİŞLERİ ──────────────────────────────────────────
+  function goStep(n) {
+    if (n===2 && !validateStep1()) return;
+    if (n===3 && !validateStep2()) return;
+    [1,2,3,4].forEach(i => { const el=document.getElementById('step'+i); if(el) el.classList.add('hidden'); });
+    document.getElementById('step'+n).classList.remove('hidden');
+    updateStepper(n);
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  function validateStep1() {
+    if (!state.selectedTur||!state.selectedSehir||!state.selectedSeviye||!state.selectedTarih) {
+      alert('Lütfen tüm sınav seçimlerini tamamlayın.'); return false;
+    }
+    return true;
+  }
+  function validateStep2() {
+    const a=document.getElementById('adSoyad').value.trim();
+    const t=document.getElementById('telefon').value.trim();
+    const e=document.getElementById('email').value.trim();
+    if (!a||!t||!e) { alert('Lütfen tüm zorunlu alanları doldurun.'); return false; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { alert('Geçerli bir e-posta adresi girin.'); return false; }
+    if (!document.getElementById('rizaCheck').checked) { alert('KVKK onayı gereklidir.'); return false; }
+    return true;
+  }
+
+  function updateStepper(n) {
+    for (let i=1;i<=4;i++) {
+      const d=document.getElementById('sd'+i);
+      if (!d) continue;
+      d.classList.remove('active','done');
+      if (i<n) d.classList.add('done');
+      if (i===n) d.classList.add('active');
+    }
+  }
+
+  function toggleRiza() {
+    document.getElementById('btn2Next').disabled = !document.getElementById('rizaCheck').checked;
+  }
+
+  // ── DOSYA ───────────────────────────────────────────────────
+  function handleFile(num) {
+    const input = document.getElementById('file'+num);
+    if (input.files?.[0]) setFile(num, input.files[0]);
+  }
+  function handleDrop(e, num) {
+    e.preventDefault();
+    document.getElementById('drop'+num).classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) setFile(num, e.dataTransfer.files[0]);
+  }
+  function setFile(num, file) {
+    if (file.size > 10*1024*1024) { alert('Dosya 10 MB\'ı aşamaz.'); return; }
+    if (!['image/jpeg','image/png','application/pdf'].includes(file.type)) { alert('Yalnızca JPG, PNG veya PDF.'); return; }
+    state.files[num] = file;
+    const prev = document.getElementById('file'+num+'Preview');
+    prev.innerHTML = `<span style="font-size:22px">${file.type==='application/pdf'?'📄':'🖼️'}</span>
+      <div><div style="font-weight:700">${file.name}</div><div style="font-size:12px;color:var(--gray-500)">${(file.size/1024/1024).toFixed(2)} MB</div></div>
+      <button class="del-btn" onclick="removeFile(${num})">×</button>`;
+    prev.classList.remove('hidden');
+    document.getElementById('drop'+num).classList.add('hidden');
+    document.getElementById('btn3Submit').disabled = false;
+  }
+  function removeFile(num) {
+    state.files[num] = null;
+    document.getElementById('file'+num+'Preview').classList.add('hidden');
+    document.getElementById('drop'+num).classList.remove('hidden');
+    document.getElementById('file'+num).value = '';
+    document.getElementById('btn3Submit').disabled = !state.files[1];
+  }
+
+  // ── FORM GÖNDER ─────────────────────────────────────────────
+  async function submitForm() {
+    if (!state.files[1]) { alert('Lütfen en az 1 kimlik belgesi yükleyin.'); return; }
+    hide('step3'); show('submitLoading');
+
+    try {
+      setLoading('Belge 1 yükleniyor…');
+      const link1 = await uploadToDrive(state.files[1]);
+
+      let link2='', belge2Adi='';
+      if (state.files[2]) {
+        setLoading('Belge 2 yükleniyor…');
+        link2 = await uploadToDrive(state.files[2]);
+        belge2Adi = state.files[2].name;
+      }
+
+      setLoading('Kayıt tamamlanıyor…');
+      const formData = {
+        adSoyad:   document.getElementById('adSoyad').value.trim(),
+        telefon:   document.getElementById('telefon').value.trim(),
+        email:     document.getElementById('email').value.trim(),
+        sehir:     state.selectedSehir,
+        sinavTuru: state.selectedTur,
+        seviye:    state.selectedSeviye,
+        kurum:     state.selectedKurum,
+        tarih:     state.selectedTarih,
+        belge1Adi: state.files[1].name,
+        belge1Link: link1,
+        belge2Adi, belge2Link: link2,
+      };
+
+      const res  = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'kayitKaydet', formData }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+
+      onBasarili(formData);
+    } catch (err) {
+      hide('submitLoading'); show('step3');
+      alert('Hata: ' + err.message);
+    }
+  }
+
+  async function uploadToDrive(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async e => {
+        const base64 = e.target.result.split(',')[1];
+        try {
+          const res  = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action:'uploadFile', base64Data:base64, fileName:file.name, mimeType:file.type, kurumAdi:state.selectedKurum }),
+          });
+          const json = await res.json();
+          if (json.success) resolve(json.url);
+          else reject(new Error(json.error));
+        } catch(err) { reject(err); }
+      };
+      reader.onerror = () => reject(new Error('Dosya okunamadı'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function onBasarili(fd) {
+    hide('submitLoading');
+    document.getElementById('successEmail').textContent = fd.email;
+    document.getElementById('successOzet').innerHTML = `
+      <div class="ozet-row"><span class="ozet-key">Sınav:</span><span class="ozet-val">${fd.sinavTuru}</span></div>
+      <div class="ozet-row"><span class="ozet-key">Seviye:</span><span class="ozet-val">${fd.seviye}</span></div>
+      <div class="ozet-row"><span class="ozet-key">Şehir:</span><span class="ozet-val">${fd.sehir}</span></div>
+      <div class="ozet-row"><span class="ozet-key">Kurum:</span><span class="ozet-val">${fd.kurum}</span></div>
+      <div class="ozet-row"><span class="ozet-key">Tarih:</span><span class="ozet-val">${fd.tarih}</span></div>`;
+    show('step4'); updateStepper(4);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function yeniKayit() {
+    Object.assign(state, {selectedTur:null,selectedSehir:null,selectedSeviye:null,selectedTarih:null,selectedKurum:null,files:{1:null,2:null}});
+    ['adSoyad','telefon','email'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('rizaCheck').checked = false;
+    document.getElementById('btn2Next').disabled = true;
+    document.getElementById('btn3Submit').disabled = true;
+    [1,2].forEach(n=>{
+      document.getElementById('file'+n+'Preview').classList.add('hidden');
+      document.getElementById('drop'+n).classList.remove('hidden');
+      document.getElementById('file'+n).value='';
+    });
+    ['sehirGroup','seviyeGroup','tarihGroup','secimOzeti','btn1Next'].forEach(hide);
+    document.querySelectorAll('.sel-card').forEach(c=>c.classList.remove('selected'));
+    goStep(1);
+  }
+
+  // ── YARDIMCI ────────────────────────────────────────────────
+  function show(id) { document.getElementById(id)?.classList.remove('hidden'); }
+  function hide(id) { document.getElementById(id)?.classList.add('hidden'); }
+  function setLoading(t) { document.getElementById('loadingText').textContent = t; }
+  function ayAdi(m) { return ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'][m]||''; }
+</script>
+</body>
+</html>
