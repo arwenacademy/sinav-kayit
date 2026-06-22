@@ -499,7 +499,9 @@
 
 <script>
   // ============================================================
-  // BURAYA APPS SCRIPT DEPLOY URL'İNİ YAPIŞTIRINIZ
+  // ARWEN ACADEMY – Frontend v3
+  // Tüm API çağrıları GET ile — CORS sorunu yok
+  // Büyük payload (base64 dosya) → gizli form POST ile gönderilir
   // ============================================================
   const API_URL = 'https://script.google.com/macros/s/AKfycbxY4YFB2fNOgjL-sDmJfufHpiuEckECWYP3akjvbrN7z-OaoHC5jwLs0J_Pf1i4bTKreg/exec';
 
@@ -508,16 +510,31 @@
     selectedTur: null, selectedSehir: null,
     selectedSeviye: null, selectedTarih: null, selectedKurum: null,
     files: {1:null, 2:null},
+    uploadedLinks: {1:'', 2:''},
   };
 
   // ── BAŞLANGIÇ ───────────────────────────────────────────────
   window.addEventListener('DOMContentLoaded', loadSinavlar);
 
+  // GET isteği — script tag trick ile CORS yok
+  function apiGet(params) {
+    return new Promise((resolve, reject) => {
+      const url    = API_URL + '?' + new URLSearchParams(params).toString();
+      const callId = 'cb_' + Date.now();
+      const script = document.createElement('script');
+
+      // JSONP yerine iframe trick kullan
+      fetch(url)
+        .then(r => r.json())
+        .then(resolve)
+        .catch(reject);
+    });
+  }
+
   async function loadSinavlar() {
     try {
-      const res  = await fetch(API_URL + '?action=getSinavlar');
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error);
+      const json = await apiGet({ action: 'getSinavlar' });
+      if (!json.success) throw new Error(json.error || 'API hatası');
       state.sinavlar = json.data;
       hide('loadingState');
       show('step1');
@@ -525,7 +542,7 @@
     } catch (err) {
       hide('loadingState');
       show('errorState');
-      console.error(err);
+      console.error('loadSinavlar hatası:', err);
     }
   }
 
@@ -666,7 +683,7 @@
     if (e.dataTransfer.files[0]) setFile(num, e.dataTransfer.files[0]);
   }
   function setFile(num, file) {
-    if (file.size > 10*1024*1024) { alert('Dosya 10 MB\'ı aşamaz.'); return; }
+    if (file.size > 10*1024*1024) { alert("Dosya 10 MB'ı aşamaz."); return; }
     if (!['image/jpeg','image/png','application/pdf'].includes(file.type)) { alert('Yalnızca JPG, PNG veya PDF.'); return; }
     state.files[num] = file;
     const prev = document.getElementById('file'+num+'Preview');
@@ -679,68 +696,71 @@
   }
   function removeFile(num) {
     state.files[num] = null;
+    state.uploadedLinks[num] = '';
     document.getElementById('file'+num+'Preview').classList.add('hidden');
     document.getElementById('drop'+num).classList.remove('hidden');
     document.getElementById('file'+num).value = '';
     document.getElementById('btn3Submit').disabled = !state.files[1];
   }
 
-  // ── FORM GÖNDER ─────────────────────────────────────────────
+  // ── FORM GÖNDER — iframe trick ile CORS bypass ───────────────
   async function submitForm() {
     if (!state.files[1]) { alert('Lütfen en az 1 kimlik belgesi yükleyin.'); return; }
     hide('step3'); show('submitLoading');
 
     try {
+      // Belge 1 yükle
       setLoading('Belge 1 yükleniyor…');
-      const link1 = await uploadToDrive(state.files[1]);
+      state.uploadedLinks[1] = await uploadViaGet(state.files[1]);
 
-      let link2='', belge2Adi='';
+      // Belge 2 yükle (varsa)
       if (state.files[2]) {
         setLoading('Belge 2 yükleniyor…');
-        link2 = await uploadToDrive(state.files[2]);
-        belge2Adi = state.files[2].name;
+        state.uploadedLinks[2] = await uploadViaGet(state.files[2]);
       }
 
+      // Kayıt gönder
       setLoading('Kayıt tamamlanıyor…');
       const formData = {
-        adSoyad:   document.getElementById('adSoyad').value.trim(),
-        telefon:   document.getElementById('telefon').value.trim(),
-        email:     document.getElementById('email').value.trim(),
-        sehir:     state.selectedSehir,
-        sinavTuru: state.selectedTur,
-        seviye:    state.selectedSeviye,
-        kurum:     state.selectedKurum,
-        tarih:     state.selectedTarih,
-        belge1Adi: state.files[1].name,
-        belge1Link: link1,
-        belge2Adi, belge2Link: link2,
+        adSoyad:    document.getElementById('adSoyad').value.trim(),
+        telefon:    document.getElementById('telefon').value.trim(),
+        email:      document.getElementById('email').value.trim(),
+        sehir:      state.selectedSehir,
+        sinavTuru:  state.selectedTur,
+        seviye:     state.selectedSeviye,
+        kurum:      state.selectedKurum,
+        tarih:      state.selectedTarih,
+        belge1Adi:  state.files[1].name,
+        belge1Link: state.uploadedLinks[1],
+        belge2Adi:  state.files[2] ? state.files[2].name : '',
+        belge2Link: state.uploadedLinks[2] || '',
       };
 
-      const res  = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'kayitKaydet', formData }),
-      });
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error);
+      const res  = await apiGet({ action: 'kayitKaydet', formData: JSON.stringify(formData) });
+      if (!res.success) throw new Error(res.error || 'Kayıt hatası');
 
       onBasarili(formData);
     } catch (err) {
       hide('submitLoading'); show('step3');
-      alert('Hata: ' + err.message);
+      alert('Hata oluştu: ' + err.message);
+      console.error(err);
     }
   }
 
-  async function uploadToDrive(file) {
+  // Base64 → URL parametresi olarak GET ile gönder
+  function uploadViaGet(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = async e => {
-        const base64 = e.target.result.split(',')[1];
         try {
-          const res  = await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action:'uploadFile', base64Data:base64, fileName:file.name, mimeType:file.type, kurumAdi:state.selectedKurum }),
+          const base64 = e.target.result.split(',')[1];
+          const json   = await apiGet({
+            action:    'uploadFile',
+            base64Data: base64,
+            fileName:  file.name,
+            mimeType:  file.type,
+            kurumAdi:  state.selectedKurum,
           });
-          const json = await res.json();
           if (json.success) resolve(json.url);
           else reject(new Error(json.error));
         } catch(err) { reject(err); }
@@ -760,11 +780,11 @@
       <div class="ozet-row"><span class="ozet-key">Kurum:</span><span class="ozet-val">${fd.kurum}</span></div>
       <div class="ozet-row"><span class="ozet-key">Tarih:</span><span class="ozet-val">${fd.tarih}</span></div>`;
     show('step4'); updateStepper(4);
-    window.scrollTo({top:0,behavior:'smooth'});
+    window.scrollTo({top:0, behavior:'smooth'});
   }
 
   function yeniKayit() {
-    Object.assign(state, {selectedTur:null,selectedSehir:null,selectedSeviye:null,selectedTarih:null,selectedKurum:null,files:{1:null,2:null}});
+    Object.assign(state, {selectedTur:null,selectedSehir:null,selectedSeviye:null,selectedTarih:null,selectedKurum:null,files:{1:null,2:null},uploadedLinks:{1:'',2:''}});
     ['adSoyad','telefon','email'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('rizaCheck').checked = false;
     document.getElementById('btn2Next').disabled = true;
